@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Network</title>
+  <script type="text/javascript" src="./js/vis-network.min.js"></script>
+  <style type="text/css">
+    html,
+    body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      background-color: #212121;
+      color: gray;
+      font-family: "Meiryo", "Yu Gothic", "Arial";
+      font-weight: 500;
+    }
+
+    button,
+    #title,
+    #filterLabel,
+    input[type="checkbox"],
+    a {
+      background-color: transparent;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      color: inherit;
+      appearance: none;
+      font-size: 1em;
+      line-height: 1.2;
+      padding: 0.5em var(--padding-x);
+      border-width: 2px;
+      border-style: solid;
+    }
+
+    button {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      --padding-x: 1.2em;
+      vertical-align: middle;
+      text-decoration: none;
+      font-size: 12px;
+      width: 120px;
+      margin-right: 12px;
+      padding: 0.5rem 0.5rem;
+      color: gray;
+      transition: 0.3s;
+      margin-top: 10px;
+      margin-bottom: 12px;
+    }
+
+    button:hover {
+      color: #eee;
+      background: #2A2A2A
+    }
+
+    #title,
+    #filterLabel,
+    input[type="checkbox"],
+    a {
+      --padding-x: 0.5em;
+      border-color: transparent;
+    }
+
+    input[type="checkbox"] {
+      display: none;
+      /* デフォルトのチェックボックスを非表示 */
+    }
+
+    input[type="checkbox"]+span::before {
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+      content: "";
+      position: relative;
+      width: 42px;
+      height: 42px;
+      opacity: 0.5;
+      display: block;
+      cursor: pointer;
+    }
+
+    label {
+      margin-left: 4px;
+    }
+
+    input[type="checkbox"]:checked+span::before {
+      opacity: 1;
+    }
+
+    input[type="checkbox"]#checkPhysics+span::before {
+      background-image: url("./icons/elem/physics.png");
+    }
+
+    input[type="checkbox"]#checkMagic+span::before {
+      background-image: url("./icons/elem/magic.png");
+    }
+
+    input[type="checkbox"]#checkFire+span::before {
+      background-image: url("./icons/elem/fire.png");
+    }
+
+    input[type="checkbox"]#checkThunder+span::before {
+      background-image: url("./icons/elem/thunder.png");
+    }
+
+    input[type="checkbox"]#checkIce+span::before {
+      background-image: url("./icons/elem/ice.png");
+    }
+
+    input[type="checkbox"]#checkCommon+span::before {
+      background-image: url("./icons/elem/common.png");
+    }
+
+    #mynetwork {
+      width: 100%;
+      height: calc(100% - 8em);
+    }
+  </style>
+</head>
+
+<body>
+  <div style="width: 100vw; display: inline-block;">
+    <div style="display: flex;">
+      <span id="title" style="font-size: 24px;color: #AAA;">SoulTide 編成相関図</span>
+      <button onclick="changeShowName()">名前 ON/OFF</button>
+      <button onclick="changeBg()">背景 白/黒</button>
+      <button onclick="redraw()">配置リセット</button>
+      <a href="#" style="  margin-left: auto;
+    order: 2;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 32px; fill: gray">
+          <title>github</title>
+          <path
+            d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z" />
+        </svg></a>
+    </div>
+    <div style="display: flex;">
+      <span id="filterLabel">Filter:</span>
+      <label>
+        <input type="checkbox" id="checkPhysics" checked onchange="changeFilter()"><span></span>
+      </label>
+      <label>
+        <input type="checkbox" id="checkMagic" checked onchange="changeFilter()"><span></span>
+      </label>
+      <label>
+        <input type="checkbox" id="checkFire" checked onchange="changeFilter()"><span></span>
+      </label>
+      <label>
+        <input type="checkbox" id="checkThunder" checked onchange="changeFilter()"><span></span>
+      </label>
+      <label>
+        <input type="checkbox" id="checkIce" checked onchange="changeFilter()"><span></span>
+      </label>
+      <label>
+        <input type="checkbox" id="checkCommon" onchange="changeFilter()"><span></span>
+      </label>
+    </div>
+  </div>
+  <div id="mynetwork"></div>
+  <script type="text/javascript">
+    const characters = [
+      "コルシェール",
+      "アカセット",
+      "リリイロ",
+      "フリージア",
+      "神納木弁天",
+      "星見亜砂",
+      "ミネルドウェン",
+      "夢咲音月",
+      "ラヴィラ",
+      "葉隠ルリ",
+      "ニコレット",
+      "ヴァージナ",
+      "サティア",
+      "南宮凛",
+      "ドライツェーン",
+      "カバナ",
+      "九華",
+      "朔耶まこ",
+      "オーロラ",
+      "エニス",
+      "葉月ゆき",
+      "アンドレア",
+      "蕖霊",
+      "天音いのり",
+      "アリサ",
+      "シーレーノス",
+      "ミスト",
+      "越一弥心",
+      "月野未夜",
+      "イシル"
+    ]
+    const options = {
+      nodes: {
+        borderWidth: 1,
+        size: 30,
+        color: {
+          border: "#222222",
+          background: "#666666",
+        },
+        font: { color: "#eee" },
+      },
+      edges: {
+        color: "lightgray",
+      },
+      physics: {
+        "forceAtlas2Based": {
+          "avoidOverlap": 0.3,
+          "springLength": 80,
+        },
+        solver: "forceAtlas2Based"
+      }
+    };
+    const colors = {
+      Physics: { color: "#90A4AE" },
+      Fire: { color: "#D32F2F" },
+      Thunder: { color: "#FDD835" },
+      Ice: { color: "#90CAF9" },
+      Magic: { color: "#BA68C8" },
+      Common: { color: "#009688" },
+    }
+    const rel = {
+      a: 6,
+      b: 4,
+      c: 2,
+      d: 1
+    }
+
+    const edgesRaw = [
+      // 物理単体
+      { from: 3, to: 1, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 3, to: 16, value: rel.b, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 3, to: 12, value: rel.c, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 10, to: 27, value: rel.a, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 10, to: 29, value: rel.a, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 10, to: 7, value: rel.d, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 10, to: 6, value: rel.d, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 10, to: 1, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 6, to: 1, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 6, to: 16, value: rel.b, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 6, to: 12, value: rel.c, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 6, to: 14, value: rel.b, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 6, to: 7, value: rel.d, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 3, to: 14, value: rel.c, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 3, to: 15, value: rel.d, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 6, to: 15, value: rel.d, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 11, to: 1, value: rel.a, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 11, to: 6, value: rel.a, color: colors.Physics, relation: "physics", arrows: "from,to" },
+      { from: 10, to: 11, value: rel.c, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 10, to: 14, value: rel.c, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 11, to: 7, value: rel.d, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 11, to: 12, value: rel.d, color: colors.Physics, relation: "physics", arrows: "from" },
+      // 物理列
+      // 物理群体
+      { from: 4, to: 1, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 4, to: 9, value: rel.a, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 4, to: 16, value: rel.b, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 4, to: 12, value: rel.c, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 4, to: 15, value: rel.d, color: colors.Physics, relation: "physics", arrows: "from" },
+      // { from: 4, to: 2, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      // 魔法単体
+      { from: 20, to: 1, value: rel.a, color: colors.Magic, relation: "magic", arrows: "from" },
+      { from: 20, to: 8, value: rel.b, color: colors.Magic, relation: "magic", arrows: "from" },
+      { from: 20, to: 24, value: rel.a, color: colors.Magic, relation: "magic", arrows: "from" },
+      { from: 21, to: 8, value: rel.b, color: colors.Magic, relation: "magic", arrows: "from" },
+      { from: 21, to: 24, value: rel.d, color: colors.Magic, relation: "magic", arrows: "from" },
+      { from: 21, to: 1, value: rel.b, color: colors.Magic, relation: "magic", arrows: "from" },
+      // 魔法列
+      { from: 28, to: 7, value: rel.a, color: colors.Magic, relation: "magic", arrows: "from" },
+      { from: 28, to: 1, value: rel.a, color: colors.Magic, relation: "magic", arrows: "from" },
+      // { from: 28, to: 2, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      // 魔法群体
+      { from: 12, to: 13, value: rel.a, color: colors.Magic, relation: "magic", arrows: "to" },
+      { from: 13, to: 1, value: rel.a, color: colors.Magic, relation: "magic", arrows: "from" },
+      { from: 12, to: 1, value: rel.d, color: colors.Magic, relation: "magic", arrows: "from" },
+      { from: 13, to: 18, value: rel.d, color: colors.Magic, relation: "magic", arrows: "from" },
+      { from: 13, to: 30, value: rel.d, color: colors.Magic, relation: "magic", arrows: "from" },
+      // { from: 13, to: 2, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      // 雷電単体
+      { from: 19, to: 1, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 19, to: 23, value: rel.a, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      { from: 19, to: 17, value: rel.b, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      { from: 19, to: 5, value: rel.d, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      // 雷電列
+      { from: 3, to: 2, value: rel.a, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      { from: 3, to: 15, value: rel.c, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      { from: 3, to: 5, value: rel.b, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      // 雷電群体
+      { from: 15, to: 27, value: rel.a, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      { from: 15, to: 1, value: rel.a, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 15, to: 5, value: rel.c, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      { from: 15, to: 20, value: rel.b, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      { from: 3, to: 17, value: rel.c, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      { from: 15, to: 17, value: rel.c, color: colors.Thunder, relation: "thunder", arrows: "from" },
+      // { from: 15, to: 2, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      // 火炎単体
+      { from: 8, to: 1, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 8, to: 11, value: rel.c, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 8, to: 13, value: rel.c, color: colors.Fire, relation: "fire", arrows: "from,to" },
+      { from: 8, to: 18, value: rel.d, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 8, to: 25, value: rel.d, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 8, to: 14, value: rel.b, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 8, to: 26, value: rel.d, color: colors.Fire, relation: "fire", arrows: "from" },
+      // 火炎列
+      // 火炎群体
+      { from: 19, to: 30, value: rel.a, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 19, to: 26, value: rel.b, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 19, to: 25, value: rel.d, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 19, to: 18, value: rel.d, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 16, to: 1, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 16, to: 26, value: rel.a, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 16, to: 13, value: rel.c, color: colors.Fire, relation: "fire", arrows: "from,to" },
+      { from: 16, to: 25, value: rel.d, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 16, to: 30, value: rel.c, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 16, to: 18, value: rel.d, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 16, to: 9, value: rel.a, color: colors.Fire, relation: "fire", arrows: "from" },
+      { from: 26, to: 9, value: rel.b, color: colors.Fire, relation: "fire", arrows: "from" },
+      // 霧氷単体
+      { from: 22, to: 23, value: rel.b, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 22, to: 26, value: rel.a, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 22, to: 29, value: rel.c, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 22, to: 2, value: rel.d, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 26, to: 23, value: rel.d, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 22, to: 1, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      // 霧氷列
+      { from: 17, to: 25, value: rel.a, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 17, to: 24, value: rel.a, color: colors.Ice, relation: "ice", arrows: "from,to" },
+      { from: 24, to: 25, value: rel.b, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 17, to: 29, value: rel.c, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 24, to: 29, value: rel.c, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 17, to: 2, value: rel.c, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 17, to: 1, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 17, to: 23, value: rel.b, color: colors.Ice, relation: "ice", arrows: "from" },
+      // 霧氷群体
+      { from: 21, to: 1, value: rel.a, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 21, to: 29, value: rel.b, color: colors.Ice, relation: "ice", arrows: "from" },
+      { from: 21, to: 2, value: rel.c, color: colors.Ice, relation: "ice", arrows: "from" },
+      // 連撃
+      { from: 5, to: 1, value: rel.a, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 5, to: 28, value: rel.a, color: colors.Physics, relation: "physics", arrows: "from" },
+      { from: 5, to: 28, value: rel.a, color: colors.Fire, relation: "fire", arrows: "from" },
+      // その他
+      { from: 29, to: 22, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 29, to: 30, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 13, to: 11, value: rel.c, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 18, to: 4, value: rel.c, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 25, to: 4, value: rel.b, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 15, to: 11, value: rel.c, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 13, to: 7, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 25, to: 27, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 18, to: 27, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 25, to: 11, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 18, to: 11, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 22, to: 11, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+      { from: 30, to: 11, value: rel.d, color: colors.Common, relation: "common", arrows: "from" },
+    ];
+    const edges = new vis.DataSet(edgesRaw)
+    const weights = edgesRaw.reduce((acc, v) => {
+      // acc[v.from] += 1
+      acc[v.to] += 1
+      return acc
+    }, {});
+
+    const elemFilterValues = {
+      physics: true,
+      magic: true,
+      fire: true,
+      thunder: true,
+      ice: true,
+      common: false
+    }
+    const elemFilter = edge => elemFilterValues[edge.relation];
+    const nodes = new vis.DataSet(
+      characters.map((name, idx) => ({ id: idx + 1, /*value: weights[idx] ,*/ /*label: name,*/ shape: "circularImage", image: `./icons/character/${idx + 1}_${name}.png` }))
+    );
+    const nodesView = new vis.DataView(nodes);
+    const edgesView = new vis.DataView(edges, { filter: elemFilter });
+    const network = startNetwork({ nodes: nodesView, edges: edgesView })
+
+    let showName = false;
+    function changeShowName() {
+      showName = !showName;
+      const poss = Object.values(network.getPositions());
+      redraw()
+      poss.forEach((_, idx) => {
+        network.moveNode(idx + 1, _.x, _.y)
+      })
+
+    }
+
+    let bgSwitch = false;
+    function changeBg() {
+      bgSwitch = !bgSwitch;
+      const bgc = bgSwitch ? "#FAFAFA" : "#212121";
+      const fc = bgSwitch ? "#212121" : "#eee";
+      document.querySelector("body").style.backgroundColor = bgc;
+      // document.querySelector("#title").style.color = fc;
+      Object.assign(options, { nodes: { font: { color: fc } } })
+      network.setOptions(options)
+    }
+    function redraw() {
+      network.setData({
+        nodes: showName ?
+          characters.map((name, idx) => ({ id: idx + 1, label: name, shape: "circularImage", image: `./icons/character/${idx + 1}_${name}.png` }))
+          : characters.map((name, idx) => ({ id: idx + 1, shape: "circularImage", image: `./icons/character/${idx + 1}_${name}.png` })),
+        edges: edgesView,
+      })
+    }
+
+    function changeFilter() {
+      const physics = document.querySelector("#checkPhysics").checked;
+      const magic = document.querySelector("#checkMagic").checked
+      const fire = document.querySelector("#checkFire").checked
+      const thunder = document.querySelector("#checkThunder").checked
+      const ice = document.querySelector("#checkIce").checked
+      const common = document.querySelector("#checkCommon").checked
+      Object.assign(elemFilterValues, { physics, magic, fire, thunder, ice, common })
+      edgesView.refresh()
+    }
+
+    function startNetwork(data) {
+      const container = document.getElementById("mynetwork");
+      return new vis.Network(container, data, options);
+    }
+
+  </script>
+</body>
+
+</html>
